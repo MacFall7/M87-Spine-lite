@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "session_id",
+    "proposal_id",
+    "sequence_number",
+    "timestamp",
+    "executor",
+    "action",
+    "result",
+    "budget_snapshot",
+    "git_context",
+    "previous_receipt_hash",
+    "receipt_hash"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "proposal_id": {
+      "type": "string"
+    },
+    "sequence_number": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "executor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "model",
+        "instance_id"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "instance_id": {
+          "type": "string"
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool",
+        "operation",
+        "effect_class",
+        "risk_delta",
+        "description",
+        "command",
+        "target_paths",
+        "reversibility"
+      ],
+      "properties": {
+        "tool": {
+          "type": "string"
+        },
+        "operation": {
+          "type": "string"
+        },
+        "effect_class": {
+          "type": "string"
+        },
+        "risk_delta": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "command": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "target_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reversibility": {
+          "type": "string"
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "exit_code",
+        "blocked_by",
+        "diff_hash",
+        "files_created",
+        "files_modified",
+        "files_deleted",
+        "stdout_truncated"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "success",
+            "blocked",
+            "failed"
+          ]
+        },
+        "exit_code": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "blocked_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "diff_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "files_created": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "files_modified": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "files_deleted": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stdout_truncated": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "budget_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "steps_used",
+        "steps_remaining",
+        "commands_used",
+        "writes_used",
+        "files_touched",
+        "runtime_elapsed_seconds",
+        "session_risk_score",
+        "current_posture"
+      ],
+      "properties": {
+        "steps_used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "steps_remaining": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "commands_used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "writes_used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "files_touched": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "runtime_elapsed_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "session_risk_score": {
+          "type": "number",
+          "minimum": 0
+        },
+        "current_posture": {
+          "type": "string"
+        }
+      }
+    },
+    "git_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch",
+        "commit_before",
+        "commit_after"
+      ],
+      "properties": {
+        "branch": {
+          "type": "string"
+        },
+        "commit_before": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "commit_after": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "previous_receipt_hash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receipt_hash": {
+      "type": "string"
+    }
+  }
+}

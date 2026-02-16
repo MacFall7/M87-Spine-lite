@@ -1,0 +1,52 @@
+# ============================================================================
+# Spine Lite — Minimal Policy Template
+# ============================================================================
+# Audit-only mode. No actions are blocked. Every action still produces a
+# receipt with effect classification and hash chain. Use this when you want
+# visibility into what Claude Code does without restricting it.
+#
+# To use: cp policy_templates/minimal.yaml governance/policy.yaml
+# ============================================================================
+
+# Key differences from strict.yaml:
+#
+# 1. enforcement_mode: advisory (not strict)
+#    Guard classifies every action but returns ALLOW for all.
+#    Effect class and risk_delta are still computed and recorded.
+#
+# 2. Network: All commands allowed (including curl, pip, npm).
+#
+# 3. Write scope: All paths writable (including .env, credentials).
+#    WARNING: No secrets protection in this mode.
+#
+# 4. Budget: No limits enforced (max values set to 9999).
+#
+# 5. Receipt chain: Still enforced. Every action gets a receipt.
+#    Chain is still cryptographically verified on session close.
+#    This is the minimum useful governance — you always know what happened.
+#
+# 6. Quality gates: Disabled (tests/lint not required).
+#
+# IMPORTANT: Copy strict.yaml first, then apply these overrides.
+# This file documents the delta — it is not a standalone policy.
+
+# Override these sections in your copy of strict.yaml:
+
+# enforcement_mode: advisory
+
+# autonomy_budget:
+#   max_steps: 9999
+#   max_runtime_seconds: 9999
+#   max_commands: 9999
+#   max_write_operations: 9999
+#   max_external_calls: 9999
+#   max_files_touched: 9999
+#   breach_behavior: warn_and_log
+
+# containment.workspace.denied_write_paths: []
+# containment.commands.denied_commands: []
+# containment.commands.network_commands: []
+
+# quality_gates.pre_modify.tests_must_pass: false
+# quality_gates.pre_modify.lint_must_pass: false
+# quality_gates.pre_commit.receipt_chain_valid: true  # keep this

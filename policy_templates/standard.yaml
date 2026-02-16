@@ -1,0 +1,48 @@
+# ============================================================================
+# Spine Lite — Standard Policy Template
+# ============================================================================
+# Less restrictive than strict.yaml. Allows package managers (pip, npm, yarn)
+# and broader write scope. Still enforces receipt chain and fail-closed.
+#
+# To use: cp policy_templates/standard.yaml governance/policy.yaml
+# ============================================================================
+
+# Key differences from strict.yaml:
+#
+# 1. Network: Package manager commands (pip install, npm install, yarn add)
+#    are reclassified from NETWORK_ATTEMPT to SHELL_MUTATING (allowed).
+#    curl, wget, ssh, nc remain blocked.
+#
+# 2. Write scope: node_modules/ and package-lock.json are writable
+#    (required for npm install to succeed).
+#
+# 3. Budget: max_external_calls raised to 5 (package registry lookups).
+#    max_commands raised to 30.
+#
+# 4. All other invariants, receipt chain, quality gates, and fail-closed
+#    behavior remain identical to strict.yaml.
+#
+# IMPORTANT: Copy strict.yaml first, then apply these overrides.
+# This file documents the delta — it is not a standalone policy.
+# A future version will support policy inheritance.
+
+# Override these sections in your copy of strict.yaml:
+
+# autonomy_budget:
+#   max_external_calls: 5
+#   max_commands: 30
+
+# containment.commands.reclassify_as_mutating:
+#   - "pip install"
+#   - "pip3 install"
+#   - "npm install"
+#   - "npm ci"
+#   - "yarn add"
+#   - "yarn install"
+
+# containment.workspace.allowed_write_paths (add):
+#   - "node_modules/"
+#   - "package-lock.json"
+#   - "yarn.lock"
+#   - "poetry.lock"
+#   - "requirements.txt"

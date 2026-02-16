@@ -1,0 +1,292 @@
+# ============================================================================
+# Spine Lite — Governance Policy v1.0
+# ============================================================================
+# Status:    CANONICAL — Enforceable logic, not documentation
+# Scope:     All Claude Code sessions under Spine governance
+# Authority: Founder Kernel v1 — 7 Architectural Invariants
+# Ref:       docs/ARCHITECTURE.md
+# ============================================================================
+
+schema_version: "1.0.0"
+policy_class: "claude_code_execution"
+enforcement_mode: strict  # strict | advisory | disabled
+
+# ----------------------------------------------------------------------------
+# 1. INVARIANT ENFORCEMENT
+# ----------------------------------------------------------------------------
+invariants:
+  proposal_not_execution:
+    enforced: true
+    description: >
+      Claude Code is a proposal generator and bounded executor.
+      It is never the authority. All mutations require governance gate approval.
+    enforcement_points:
+      - pre_write_guard
+      - pre_exec_guard
+
+  authority_separation:
+    enforced: true
+    description: >
+      Claude Code cannot approve its own proposals. Decision logic (governance gate)
+      and execution logic (Claude Code session) are logically separated.
+    rule: executor_cannot_be_approver
+
+  fail_closed_default:
+    enforced: true
+    description: >
+      On ambiguity, missing constraint, hook failure, or budget breach → halt.
+      No silent degradation. No fallback to permissive mode.
+    halt_conditions:
+      - hook_failure
+      - budget_exceeded
+      - unknown_effect_class
+      - missing_receipt
+      - scope_violation
+
+  artifact_backed_completion:
+    enforced: true
+    description: >
+      No task is "complete" without: diff hash, receipt JSON, test pass status.
+      Conversational confirmation is not completion.
+    required_artifacts:
+      - execution_receipt     # schemas/claude_receipt.schema.json
+      - diff_hash             # git diff --staged | sha256sum
+      - test_result           # exit code + summary
+
+  structured_memory:
+    enforced: true
+    description: >
+      Session state is artifact-based. Restore = replay + diff, not conversational
+      recall. Session continuity requires session_id + git commit + receipt chain.
+    restore_requires:
+      - session_id
+      - git_commit_hash
+      - receipt_chain_checksum
+
+  model_interchangeability:
+    enforced: true
+    description: >
+      Policy and hooks must function regardless of underlying model.
+      No Claude-specific prompt tricks in enforcement logic.
+
+  narrative_not_runtime:
+    enforced: true
+    description: >
+      Investor/demo framing cannot relax policy. enforcement_mode changes
+      require manual operator override with audit log entry.
+
+# ----------------------------------------------------------------------------
+# 2. AUTONOMY BUDGET
+# ----------------------------------------------------------------------------
+autonomy_budget:
+  max_steps: 20                  # total discrete operations per session segment
+  max_runtime_seconds: 300       # wall-clock per session segment (5 min)
+  max_commands: 15               # shell/tool invocations per segment
+  max_write_operations: 10       # file create/modify/delete per segment
+  max_external_calls: 0          # network disabled by default
+  max_files_touched: 20          # unique file paths per segment
+
+  breach_behavior: hard_halt     # hard_halt | warn_and_log | soft_limit
+  budget_telemetry:
+    enabled: true
+    sink: redis                  # redis | file | stdout
+    redis_key_prefix: "spine:cc:budget:"
+    emit_interval_seconds: 5
+
+# ----------------------------------------------------------------------------
+# 3. EXECUTION CONTAINMENT
+# ----------------------------------------------------------------------------
+containment:
+  workspace:
+    type: isolated               # isolated | docker | worktree
+    git_worktree_access: read_write
+    host_filesystem: read_only
+    network: disabled            # disabled | allowlist | unrestricted
+    network_allowlist: []        # populated only when network: allowlist
+
+  allowed_tools:
+    - Read
+    - Write
+    - Edit
+    - Bash
+    - Grep
+    - Glob
+    - TodoRead
+    - TodoWrite
+
+  denied_tools:
+    - WebFetch
+    - NotebookEdit
+    # Anything not in allowed_tools → fail-closed deny
+
+# ----------------------------------------------------------------------------
+# 4. SCOPE BOUNDARIES
+# ----------------------------------------------------------------------------
+scope:
+  writable_paths:
+    - "src/**"
+    - "tests/**"
+    - "docs/**"
+    - "governance/**"
+    - "hooks/**"
+    - "schemas/**"
+    - "scripts/**"
+    - "config/**"
+    - ".github/workflows/**"
+
+  denied_write_paths:
+    - ".env*"
+    - "**/*.key"
+    - "**/*.pem"
+    - "**/*.secret"
+    - "**/credentials*"
+    - "node_modules/**"
+    - ".git/objects/**"
+    - ".git/refs/**"
+
+  restricted_patterns:
+    - "governance_policy*.yaml"
+    - "**/trust_zones.json"
+    - "**/session_risk*"
+    - "**/*.schema.json"
+
+# ----------------------------------------------------------------------------
+# 5. GOVERNANCE HOOKS
+# ----------------------------------------------------------------------------
+hooks:
+  pre_write_guard:
+    trigger: before_file_write
+    script: hooks/pre_exec_guard.py
+    function: check_write_scope
+    fail_behavior: hard_stop
+
+  pre_exec_guard:
+    trigger: before_command_execution
+    script: hooks/pre_exec_guard.py
+    function: check_command
+    fail_behavior: hard_stop
+
+  post_exec_receipt:
+    trigger: after_command_execution
+    script: hooks/post_exec_receipt.py
+    function: emit_receipt
+    fail_behavior: hard_stop
+
+  session_close_audit:
+    trigger: session_end
+    script: hooks/post_exec_receipt.py
+    function: close_session
+    fail_behavior: hard_stop
+
+# ----------------------------------------------------------------------------
+# 6. EFFECT CLASSIFICATION (Claude Code subset)
+# ----------------------------------------------------------------------------
+effect_classes:
+  SAFE_READ:
+    risk_delta: 0.00
+    auto_approve: true
+
+  SCOPED_WRITE:
+    risk_delta: 0.02
+    auto_approve: true
+    conditions:
+      - path_in_writable_scope
+      - not_restricted_pattern
+
+  RESTRICTED_WRITE:
+    risk_delta: 0.08
+    auto_approve: false
+    requires: operator_override
+
+  SHELL_SAFE:
+    risk_delta: 0.01
+    auto_approve: true
+
+  SHELL_MUTATING:
+    risk_delta: 0.04
+    auto_approve: true
+    conditions:
+      - not_in_deny_list
+      - within_autonomy_budget
+
+  SHELL_DANGEROUS:
+    risk_delta: 0.10
+    auto_approve: false
+    requires: operator_confirmation
+
+  NETWORK_ATTEMPT:
+    risk_delta: 0.15
+    auto_approve: false
+    requires: deny
+
+# ----------------------------------------------------------------------------
+# 7. SESSION RISK POSTURE
+# ----------------------------------------------------------------------------
+session_risk:
+  posture_levels:
+    NORMAL:
+      threshold: 0.00
+      max_effect_class: SHELL_MUTATING
+    ELEVATED:
+      threshold: 0.30
+      max_effect_class: SCOPED_WRITE
+    LOCKDOWN:
+      threshold: 0.50
+      max_effect_class: SAFE_READ
+    HARD_TERMINATE:
+      threshold: 1.00
+      action: kill_session
+
+  risk_accumulator:
+    backend: redis
+    key: "spine:cc:risk:{session_id}"
+    window_seconds: 3600
+    decay: false
+
+# ----------------------------------------------------------------------------
+# 8. RECEIPT REQUIREMENTS
+# ----------------------------------------------------------------------------
+receipts:
+  schema: "schemas/claude_receipt.schema.json"
+  storage:
+    primary: filesystem
+    secondary: redis
+  chain_validation:
+    enabled: true
+    hash_algorithm: sha256
+    chain_field: previous_receipt_hash
+  required_per_action: true
+  required_at_session_close: true
+
+# ----------------------------------------------------------------------------
+# 9. QUALITY GATES
+# ----------------------------------------------------------------------------
+quality_gates:
+  pre_modify:
+    tests_must_pass: true
+    lint_must_pass: true
+
+  pre_commit:
+    tests_must_pass: true
+    lint_must_pass: true
+    receipt_chain_valid: true
+
+  test_runner:
+    command: "pytest"
+    timeout_seconds: 120
+    fail_behavior: block_commit
+
+  linter:
+    command: "ruff check ."
+    timeout_seconds: 30
+    fail_behavior: block_commit
+
+# ----------------------------------------------------------------------------
+# 10. MULTI-AGENT COORDINATION
+# ----------------------------------------------------------------------------
+multi_agent:
+  peer_authority: false
+  communication_channel: artifacts
+  cross_agent_proposals: true
+  conflict_resolution: fail_closed
+  shared_receipt_chain: true

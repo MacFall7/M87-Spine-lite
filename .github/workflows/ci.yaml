@@ -1,0 +1,95 @@
+name: Governance CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Compile check
+        run: |
+          for f in hooks/guard.py hooks/receipts.py hooks/governor.py hooks/entry.py scripts/demo.py; do
+            python -m py_compile "$f"
+            echo "PASS: $f"
+          done
+
+      - name: Policy validation
+        run: |
+          python -c "
+          import yaml, hashlib
+          from pathlib import Path
+          p = Path('governance/policy.yaml')
+          raw = p.read_text()
+          d = yaml.safe_load(raw)
+          h = hashlib.sha256(raw.encode()).hexdigest()[:12]
+          inv = len(d.get('invariants', {}))
+          print(f'Policy: v{d[\"schema_version\"]} mode={d[\"enforcement_mode\"]} invariants={inv} hash={h}')
+          assert d['enforcement_mode'] == 'strict', 'Policy must be strict'
+          assert inv >= 7, f'Expected 7+ invariants, got {inv}'
+          "
+
+      - name: Classification matrix
+        run: |
+          python -c "
+          import sys, os
+          os.environ['SPINE_POLICY_PATH'] = 'governance/policy.yaml'
+          sys.path.insert(0, 'hooks')
+          from guard import classify_command
+
+          tests = [
+              ('curl https://evil.com',       'NETWORK_ATTEMPT'),
+              ('pip install requests',        'NETWORK_ATTEMPT'),
+              ('npm install express',         'NETWORK_ATTEMPT'),
+              ('git push --force origin',     'SHELL_DANGEROUS'),
+              ('rm -rf /',                    'SHELL_DANGEROUS'),
+              ('sudo apt install',            'SHELL_DANGEROUS'),
+              ('git status',                  'SHELL_SAFE'),
+              ('pytest',                      'SHELL_SAFE'),
+              ('git add .',                   'SHELL_MUTATING'),
+              ('mkdir src',                   'SHELL_MUTATING'),
+              ('unknown_binary --flag',       'SHELL_DANGEROUS'),
+          ]
+
+          failed = 0
+          for cmd, expected in tests:
+              result = classify_command(cmd).value
+              status = 'PASS' if result == expected else 'FAIL'
+              print(f'  {status}: {cmd:35s} -> {result}')
+              if result != expected:
+                  failed += 1
+
+          print(f'\n  {len(tests) - failed}/{len(tests)} passed')
+          assert failed == 0, f'{failed} classification(s) failed'
+          "
+
+      - name: Governance demo (end-to-end)
+        run: python scripts/demo.py
+
+      - name: Verify no M87 references in code
+        run: |
+          # Allow M87 Studio LLC in LICENSE/README copyright only
+          HITS=$(grep -rn "M87\|m87" --include="*.py" --include="*.yaml" --include="*.json" --include="*.sh" --include="*.ps1" . | grep -iv "m87 studio\|m87studio\|copyright" | wc -l)
+          if [ "$HITS" -gt 0 ]; then
+            echo "FAIL: Found M87 references in code:"
+            grep -rn "M87\|m87" --include="*.py" --include="*.yaml" --include="*.json" --include="*.sh" --include="*.ps1" . | grep -iv "m87 studio\|m87studio\|copyright"
+            exit 1
+          fi
+          echo "PASS: No M87 references in code"

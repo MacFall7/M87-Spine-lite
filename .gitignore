@@ -1,0 +1,17 @@
+# Session artifacts (ephemeral, per-session)
+governance/receipts/
+governance/sessions/
+
+# Generated environment config
+config/.env.spine
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
