@@ -1,0 +1,71 @@
+<svg width="800" height="300" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with a subtle terminal gradient -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d1117;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#161b22;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="800" height="300" rx="15" fill="url(#bgGrad)"/>
+  <!-- Subtle Grid Pattern -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" stroke-width="0.5" stroke-opacity="0.05"/>
+  </pattern>
+  <rect width="800" height="300" fill="url(#grid)" />
+  <!-- The Shield/Spine Icon -->
+  <g transform="translate(100, 70)">
+    <!-- Shield Outline -->
+    <path d="M60 10 L110 30 V80 C110 120 60 145 60 145 C60 145 10 120 10 80 V30 L60 10Z"
+          fill="none" stroke="#58a6ff" stroke-width="3" filter="url(#glow)"/>
+
+    <!-- Spine Nodes (The Receipt Chain) -->
+    <g transform="translate(60, 40)">
+      <circle cx="0" cy="0" r="6" fill="#7ee787" filter="url(#glow)"/> <!-- Safe Read -->
+      <line x1="0" y1="6" x2="0" y2="24" stroke="#30363d" stroke-width="2"/>
+
+      <circle cx="0" cy="30" r="6" fill="#d29922"/> <!-- Mutating -->
+      <line x1="0" y1="36" x2="0" y2="54" stroke="#30363d" stroke-width="2"/>
+
+      <circle cx="0" cy="60" r="6" fill="#f85149" filter="url(#glow)"/> <!-- Denied/Hard Gate -->
+      <line x1="0" y1="66" x2="0" y2="84" stroke="#30363d" stroke-width="2"/>
+
+      <rect x="-4" y="86" width="8" height="8" rx="1" fill="#58a6ff"/> <!-- Final Audit -->
+    </g>
+  </g>
+  <!-- Text Section -->
+  <g transform="translate(250, 110)">
+    <text font-family="monospace" font-size="42" fill="#ffffff" font-weight="bold">
+      SPINE <tspan fill="#58a6ff">LITE</tspan>
+    </text>
+    <text x="2" y="35" font-family="monospace" font-size="16" fill="#8b949e" letter-spacing="1">
+      DETERMINISTIC AGENT GOVERNANCE
+    </text>
+
+    <!-- Status Tags -->
+    <g transform="translate(0, 65)">
+      <rect width="90" height="24" rx="12" fill="#238636" fill-opacity="0.2" stroke="#238636" stroke-width="1"/>
+      <text x="45" y="17" font-family="monospace" font-size="12" fill="#7ee787" text-anchor="middle">VERIFIED</text>
+
+      <rect x="100" width="110" height="24" rx="12" fill="#1f6feb" fill-opacity="0.2" stroke="#1f6feb" stroke-width="1"/>
+      <text x="155" y="17" font-family="monospace" font-size="12" fill="#58a6ff" text-anchor="middle">HARD_GATE</text>
+
+      <rect x="220" width="100" height="24" rx="12" fill="#f85149" fill-opacity="0.1" stroke="#f85149" stroke-width="1"/>
+      <text x="270" y="17" font-family="monospace" font-size="12" fill="#f85149" text-anchor="middle">FAIL_CLOSED</text>
+    </g>
+  </g>
+  <!-- Terminal Command Snippet -->
+  <g transform="translate(252, 220)">
+    <rect width="450" height="40" rx="6" fill="#000000" fill-opacity="0.4" stroke="#30363d"/>
+    <text x="15" y="25" font-family="monospace" font-size="14" fill="#d1d5db">
+      <tspan fill="#7ee787">$</tspan> claude <tspan fill="#8b949e"># Governed by M87 Spine</tspan>
+    </text>
+  </g>
+</svg>

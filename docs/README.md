@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="header.svg" alt="Spine Lite — Deterministic Agent Governance" width="800">
+</p>
+
 # Spine Lite
 
 **Governance guardrails for Claude Code.** Deterministic guards, cryptographic receipt chains, and runtime-enforced policy -- so you can prove what your AI coding agent did, what it was denied, and verify the record wasn't tampered with.
