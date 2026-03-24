@@ -64,11 +64,16 @@ NETWORK_COMMANDS: list[re.Pattern] = [
     re.compile(r"\bssh\b"),
     re.compile(r"\bscp\b"),
     re.compile(r"\brsync\b"),
-    re.compile(r"\bgit\s+push\b"),
     re.compile(r"\bgit\s+pull\b"),
     re.compile(r"\bgit\s+clone\b"),
     re.compile(r"\bpip\s+install\b"),
     re.compile(r"\bnpm\s+install\b"),
+]
+
+# Network commands that are allowed (classified as SHELL_MUTATING, not NETWORK_ATTEMPT).
+# Force-push variants are caught earlier by DENY_COMMANDS and never reach this check.
+SAFE_NETWORK_COMMANDS: list[re.Pattern] = [
+    re.compile(r"\bgit\s+push\b"),
 ]
 
 # Commands classified as safe (read-only / non-mutating)
@@ -347,6 +352,11 @@ def classify_command(command: str) -> EffectClass:
     for pattern in DENY_COMMANDS:
         if pattern.search(stripped):
             return EffectClass.SHELL_DANGEROUS
+
+    # 1.5) Safe network commands (e.g. non-force git push) → SHELL_MUTATING
+    for pattern in SAFE_NETWORK_COMMANDS:
+        if pattern.search(stripped):
+            return EffectClass.SHELL_MUTATING
 
     # 2) Network attempts (blocked in disabled-network posture; tracked distinctly)
     for pattern in NETWORK_COMMANDS:
