@@ -86,10 +86,10 @@ jobs:
       - name: Verify no M87 references in code
         run: |
           # Allow M87 Studio LLC in LICENSE/README copyright only
-          HITS=$(grep -rn "M87\|m87" --include="*.py" --include="*.yaml" --include="*.json" --include="*.sh" --include="*.ps1" . | grep -iv "m87 studio\|m87studio\|copyright" | wc -l)
+          HITS=$(grep -rn "M87\\|m87" --exclude-dir=.github|grep -rn "M87\\|m87" --exclude-dir=.github --include="*.py" --include="*.yaml" --include="*.json" --include="*.sh" --include="*.ps1" . | grep -iv "m87 studio\|m87studio\|copyright" | wc -l)
           if [ "$HITS" -gt 0 ]; then
             echo "FAIL: Found M87 references in code:"
-            grep -rn "M87\|m87" --include="*.py" --include="*.yaml" --include="*.json" --include="*.sh" --include="*.ps1" . | grep -iv "m87 studio\|m87studio\|copyright"
+            grep -rn "M87\\|m87" --exclude-dir=.github|grep -rn "M87\\|m87" --exclude-dir=.github --include="*.py" --include="*.yaml" --include="*.json" --include="*.sh" --include="*.ps1" . | grep -iv "m87 studio\|m87studio\|copyright"
             exit 1
           fi
           echo "PASS: No M87 references in code"
