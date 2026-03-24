@@ -41,6 +41,16 @@ This repo is governed. You operate as a **bounded executor** — proposal genera
 
 **Restricted (operator override required):** `governance/policy*.yaml`, `trust_zones.json`, `session_risk*`, `*.schema.json`
 
+## Computer-use & MCP tool governance
+
+Computer-use tools (`computer screenshot`, `computer click`, `computer type`, `computer scroll`, `computer key`, `str_replace_based_edit_tool`) are **not in any allowlist**. They fail-closed to `SHELL_DANGEROUS` and are always denied.
+
+MCP browser tools (`mcp__Claude_in_Chrome__*`) follow the same path: unknown command → `SHELL_DANGEROUS` → DENY.
+
+**Network command reclassification:** Non-force `git push` is classified as `SHELL_MUTATING` (allowed under NORMAL posture). Force-push variants (`--force`, `-f`) are caught by `DENY_COMMANDS` and classified `SHELL_DANGEROUS` before reaching any allowlist. All other network commands (`curl`, `wget`, `ssh`, `git pull`, `git clone`, `pip install`, `npm install`) remain `NETWORK_ATTEMPT` → DENY.
+
+The catch-all at the end of `classify_command` returns `SHELL_DANGEROUS` for anything not matched. This is Invariant 3 (fail-closed) enforced structurally, not declaratively.
+
 ## Autonomy budget (per session segment)
 
 - Max 20 steps, 15 commands, 10 writes, 20 files touched
