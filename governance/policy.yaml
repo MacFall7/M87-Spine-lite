@@ -156,26 +156,26 @@ scope:
 hooks:
   pre_write_guard:
     trigger: before_file_write
-    script: hooks/pre_exec_guard.py
+    script: hooks/guard.py
     function: check_write_scope
     fail_behavior: hard_stop
 
   pre_exec_guard:
     trigger: before_command_execution
-    script: hooks/pre_exec_guard.py
+    script: hooks/guard.py
     function: check_command
     fail_behavior: hard_stop
 
   post_exec_receipt:
     trigger: after_command_execution
-    script: hooks/post_exec_receipt.py
+    script: hooks/receipts.py
     function: emit_receipt
     fail_behavior: hard_stop
 
   session_close_audit:
     trigger: session_end
-    script: hooks/post_exec_receipt.py
-    function: close_session
+    script: hooks/governor.py
+    function: cmd_close_session
     fail_behavior: hard_stop
 
 # ----------------------------------------------------------------------------
