@@ -45,6 +45,28 @@ class TestClassification:
         result = guard.classify_command("unknown_binary --evil-flag")
         assert result.value == "SHELL_DANGEROUS", f"Unknown → {result.value}, expected SHELL_DANGEROUS (fail-closed)"
 
+    def test_governance_cli_reachable(self):
+        """The documented governor CLI workflow must pass the classifier."""
+        for cmd in [
+            "python hooks/governor.py init-session",
+            "python hooks/governor.py check-write --path src/main.py",
+            "python hooks/governor.py check-command --command 'git status'",
+            "python hooks/governor.py quality-gate pre-commit",
+            "python hooks/governor.py close-session",
+            "python hooks/governor.py status",
+        ]:
+            result = guard.classify_command(cmd)
+            assert result.value == "SHELL_SAFE", f"{cmd} → {result.value}, expected SHELL_SAFE"
+
+    def test_governance_cli_does_not_leak_to_arbitrary_scripts(self):
+        """Only named governor subcommands are safe; other scripts under hooks/ fail-closed."""
+        for cmd in [
+            "python hooks/governor.py drop-database",
+            "python hooks/arbitrary_script.py",
+        ]:
+            result = guard.classify_command(cmd)
+            assert result.value == "SHELL_DANGEROUS", f"{cmd} → {result.value}, expected SHELL_DANGEROUS"
+
 
 class TestWriteScope:
     """Guard must enforce write scope boundaries."""

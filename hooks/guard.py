@@ -82,9 +82,25 @@ SAFE_COMMAND_PREFIXES: list[str] = [
     "echo", "printf", "date", "pwd", "env", "whoami",
     "git status", "git log", "git diff", "git show", "git branch",
     "git remote -v", "python -c", "python3 -c",
+    "python -m pytest", "python3 -m pytest",
     "pytest", "ruff check", "ruff format --check", "mypy", "pyright",
     "npm test", "npm run lint", "npx tsc --noEmit",
     "cargo test", "cargo check", "cargo clippy",
+]
+
+# Governance CLI (explicit subcommand allowlist). These invoke the guard/receipt
+# system itself, so they must pass the classifier for the documented workflow in
+# CLAUDE.md to be executable. Kept as an explicit list — not a catch-all on
+# `python hooks/` — to preserve authority separation: only named governance
+# subcommands are reachable, not arbitrary scripts under hooks/.
+GOVERNANCE_COMMAND_PREFIXES: list[str] = [
+    "python hooks/governor.py init-session",
+    "python hooks/governor.py check-write",
+    "python hooks/governor.py check-command",
+    "python hooks/governor.py receipt",
+    "python hooks/governor.py quality-gate",
+    "python hooks/governor.py close-session",
+    "python hooks/governor.py status",
 ]
 
 # Commands classified as mutating but allowed
@@ -340,11 +356,13 @@ def classify_command(command: str) -> EffectClass:
     Classify a shell command into an effect class.
 
     Order (fail-closed):
-      1) deny patterns (dangerous)
-      2) network patterns (network attempt)
-      3) safe prefixes
-      4) mutating prefixes
-      5) unknown (dangerous)
+      1) deny patterns (dangerous) — wins against broader matches
+      2) safe-network patterns (git push → mutating, not network)
+      3) network patterns (network attempt)
+      4) governance CLI subcommands (named allowlist)
+      5) safe prefixes
+      6) mutating prefixes
+      7) unknown (dangerous)
     """
     stripped = command.strip()
 
@@ -362,6 +380,11 @@ def classify_command(command: str) -> EffectClass:
     for pattern in NETWORK_COMMANDS:
         if pattern.search(stripped):
             return EffectClass.NETWORK_ATTEMPT
+
+    # 2.5) Governance CLI subcommands (named allowlist, not a directory glob)
+    for prefix in GOVERNANCE_COMMAND_PREFIXES:
+        if stripped.startswith(prefix):
+            return EffectClass.SHELL_SAFE
 
     # 3) Safe commands
     for prefix in SAFE_COMMAND_PREFIXES:
@@ -499,9 +522,9 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 3:
-        print("Usage: python pre_exec_guard.py <write|command> <target>")
-        print("  write:   python pre_exec_guard.py write src/main.py")
-        print("  command: python pre_exec_guard.py command 'git status'")
+        print("Usage: python hooks/guard.py <write|command> <target>")
+        print("  write:   python hooks/guard.py write src/main.py")
+        print("  command: python hooks/guard.py command 'git status'")
         sys.exit(1)
 
     mode = sys.argv[1]

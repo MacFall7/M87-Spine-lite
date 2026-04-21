@@ -49,7 +49,7 @@ invariants:
       No task is "complete" without: diff hash, receipt JSON, test pass status.
       Conversational confirmation is not completion.
     required_artifacts:
-      - execution_receipt     # schemas/claude_receipt.schema.json
+      - execution_receipt     # schemas/receipt.schema.json
       - diff_hash             # git diff --staged | sha256sum
       - test_result           # exit code + summary
 
@@ -133,6 +133,10 @@ scope:
     - "scripts/**"
     - "config/**"
     - ".github/workflows/**"
+    # Root-level release-adjacent files (enumerated, not globbed)
+    - "CHANGELOG.md"
+    - "README.md"
+    - "pyproject.toml"
 
   denied_write_paths:
     - ".env*"
@@ -247,7 +251,7 @@ session_risk:
 # 8. RECEIPT REQUIREMENTS
 # ----------------------------------------------------------------------------
 receipts:
-  schema: "schemas/claude_receipt.schema.json"
+  schema: "schemas/receipt.schema.json"
   storage:
     primary: filesystem
     secondary: redis
@@ -272,7 +276,10 @@ quality_gates:
     receipt_chain_valid: true
 
   test_runner:
-    command: "pytest"
+    # Use `python -m pytest` so the test runner uses the same interpreter that
+    # has the declared deps in pyproject.toml, rather than whatever isolated
+    # pytest binary happens to be first on PATH.
+    command: "python -m pytest"
     timeout_seconds: 120
     fail_behavior: block_commit
 
