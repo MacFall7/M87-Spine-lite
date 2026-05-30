@@ -1,0 +1,36 @@
+[project]
+name = "spine-lite"
+version = "0.1.2"
+description = "Spine Lite — Governed execution for Claude Code"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1.0",
+    "jsonschema>=4.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+# Spine Lite is a governance toolkit invoked in-place from the repo root.
+# It is not a redistributable package, so no packages are collected.
+packages = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff.lint.per-file-ignores]
+# These modules patch sys.path before importing the in-repo `guard` /
+# `receipts` modules, so those imports legitimately sit below module-level
+# statements. Ignore E402 (import not at top of file) for them only.
+"tests/*.py" = ["E402"]
+"hooks/governor.py" = ["E402"]

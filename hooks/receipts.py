@@ -534,8 +534,8 @@ if __name__ == "__main__":
 
     if len(sys.argv) < 2:
         print("Usage:")
-        print("  python post_exec_receipt.py verify <session_dir>")
-        print("  python post_exec_receipt.py demo")
+        print("  python hooks/receipts.py verify <session_dir>")
+        print("  python hooks/receipts.py demo")
         sys.exit(1)
 
     cmd = sys.argv[1]
