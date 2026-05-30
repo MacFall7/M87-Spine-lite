@@ -27,3 +27,9 @@ packages = []
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff.lint.per-file-ignores]
+# test_smoke.py patches sys.path before importing the in-repo `guard`
+# module, so that import legitimately sits below module-level statements.
+# Ignore E402 (import not at top of file) for this file only.
+"tests/test_smoke.py" = ["E402"]

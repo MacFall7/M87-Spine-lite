@@ -4,7 +4,6 @@ Spine Lite — Smoke tests
 Validates that the governance guard and receipt system function correctly.
 These run as part of the quality gate during governed sessions.
 """
-import json
 import os
 import sys
 from pathlib import Path
