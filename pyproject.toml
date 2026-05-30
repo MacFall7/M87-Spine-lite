@@ -29,7 +29,8 @@ packages = []
 testpaths = ["tests"]
 
 [tool.ruff.lint.per-file-ignores]
-# test_smoke.py patches sys.path before importing the in-repo `guard`
-# module, so that import legitimately sits below module-level statements.
-# Ignore E402 (import not at top of file) for this file only.
-"tests/test_smoke.py" = ["E402"]
+# These modules patch sys.path before importing the in-repo `guard` /
+# `receipts` modules, so those imports legitimately sit below module-level
+# statements. Ignore E402 (import not at top of file) for them only.
+"tests/*.py" = ["E402"]
+"hooks/governor.py" = ["E402"]
