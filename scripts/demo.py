@@ -57,7 +57,7 @@ TOTAL = 10
 
 def main() -> int:
     print(f"\n{C_CYAN}{'='*60}")
-    print(f"  Spine Lite — Governance Demo")
+    print("  Spine Lite — Governance Demo")
     print(f"{'='*60}{C_NC}")
 
     # 1. Init session
@@ -162,7 +162,7 @@ def main() -> int:
 
     # Summary
     print(f"\n{C_CYAN}{'='*60}")
-    print(f"  Demo Complete — All Governance Gates Enforced")
+    print("  Demo Complete — All Governance Gates Enforced")
     print(f"{'='*60}{C_NC}")
     print(f"""
   Allowed: 2 (git status + docs write)
