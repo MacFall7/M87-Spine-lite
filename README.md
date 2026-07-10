@@ -6,6 +6,9 @@
 
 **Governance guardrails for Claude Code.** Deterministic guards, cryptographic receipt chains, and runtime-enforced policy -- so you can prove what your AI coding agent did, what it was denied, and verify the record wasn't tampered with.
 
+> **Repository role:** Original Claude Code governance hook implementation. Defines its own 7-class effect taxonomy (`SAFE_READ`/`SHELL_SAFE`/`SHELL_MUTATING`/`SCOPED_WRITE`/`RESTRICTED_WRITE`/`SHELL_DANGEROUS`/`NETWORK_ATTEMPT`), which is a separate lineage from the 6-class taxonomy in [spine-lite-python](https://github.com/MacFall7/spine-lite-python) (`READ`/`WRITE`/`NETWORK`/`EXECUTE`/`SPAWN`/`DESTRUCTIVE`). [spine-lite.NET](https://github.com/MacFall7/spine-lite.NET) is wire-compatible with this repo's taxonomy, not spine-lite-python's — do not assume cross-runtime interop between the two lineages without checking.
+> **Status:** Active, in production use as the Claude Code hook governance layer.
+
 ---
 
 ## What is Spine Lite?
